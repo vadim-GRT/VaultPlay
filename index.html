@@ -247,14 +247,14 @@
 
     <script>
         let gamesData = [];
-        try {
-            const stored = localStorage.getItem('gamesData');
-            if (stored) gamesData = JSON.parse(stored);
-        } catch(e) {}
-        if (gamesData.length === 0 && typeof window.gamesData !== 'undefined') {
-            gamesData = window.gamesData;
-            localStorage.setItem('gamesData', JSON.stringify(gamesData));
-        }
+if (typeof window.gamesData !== 'undefined' && window.gamesData.length > 0) {
+    gamesData = [...window.gamesData];
+} else {
+    try {
+        const stored = localStorage.getItem('gamesData');
+        if (stored) gamesData = JSON.parse(stored);
+    } catch(e) {}
+}
 
         let activeGenre = 'all';
         let currentSort = { type: 'year', direction: 'desc' };
