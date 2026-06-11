@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VaultPlay — Бесплатный доступ к играм</title>
+    <style>
+        :root {
+            --bg: #0A0F1A;
+            --card: #0D1525;
+            --accent: #22C55E;
+            --accent-hover: #4ADE80;
+            --accent-glow: rgba(34, 197, 94, 0.6);
+            --text: #F8FAFC;
+            --muted: #94A3B8;
+            --glass: rgba(13, 21, 37, 0.75);
+            --glass-border: rgba(34, 197, 94, 0.12);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+            background: #060B14;
+            background-image:
+                radial-gradient(ellipse at 15% 0%, rgba(34,197,94,0.12) 0%, transparent 55%),
+                radial-gradient(ellipse at 85% 0%, rgba(34,197,94,0.06) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 100%, rgba(34,197,94,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 0% 60%, rgba(0,0,0,0.4) 0%, transparent 50%);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .banner {
+            width: 100%; aspect-ratio: 21/9; position: relative; overflow: hidden;
+            border-bottom: 2px solid rgba(34,197,94,0.3); box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        }
+        .banner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .banner-scroll {
+            position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+            z-index: 10; cursor: pointer; animation: bounce 2s infinite;
+            color: var(--accent); font-size: 32px; opacity: 0.8;
+            text-shadow: 0 0 20px rgba(34,197,94,0.6);
+        }
+        @keyframes bounce {
+            0%,100%{transform:translateX(-50%)translateY(0);}
+            50%{transform:translateX(-50%)translateY(10px);}
+        }
+
+        header {
+            position: sticky; top: 0; z-index: 100;
+            background: linear-gradient(180deg, rgba(6,11,20,0.95) 0%, rgba(10,15,26,0.85) 100%);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(34,197,94,0.15);
+            padding: 16px 40px; display: flex; align-items: center; justify-content: space-between;
+            gap: 24px; box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        }
+        .logo-block { display: flex; align-items: center; gap: 12px; cursor: pointer; flex-shrink: 0; }
+        .logo-block img.logo-icon { height: 42px; }
+        .logo-block img.logo-text-img { height: 28px; }
+        .search-container { position: relative; width: 320px; flex-shrink: 0; }
+        .search-container input {
+            width: 100%; padding: 12px 20px 12px 44px;
+            border: 1px solid rgba(34,197,94,0.15); border-radius: 14px;
+            background: rgba(10,15,26,0.6); color: var(--text); font-size: 15px; outline: none;
+        }
+        .search-container input:focus { border-color: var(--accent); }
+        .search-container input::placeholder { color: #475569; }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #475569; }
+
+        .toolbar {
+            padding: 16px 40px; display: flex; align-items: center; justify-content: space-between;
+            gap: 16px; flex-wrap: wrap;
+        }
+        .genres-toggle, .sort-toggle {
+            padding: 10px 20px; border: 1px solid rgba(34,197,94,0.15); border-radius: 14px;
+            background: var(--glass); color: var(--text); cursor: pointer; font-size: 14px;
+            display: flex; align-items: center; gap: 8px; white-space: nowrap;
+        }
+        .genres-toggle:hover, .sort-toggle:hover { border-color: var(--accent); }
+        .genres-dropdown, .sort-dropdown {
+            position: absolute; top: calc(100% + 8px); background: rgba(10,15,26,0.97);
+            backdrop-filter: blur(30px); border: 1px solid rgba(34,197,94,0.15);
+            border-radius: 16px; padding: 12px; display: none; flex-direction: column; gap: 4px;
+            z-index: 50; box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+        .genres-dropdown { left: 0; min-width: 220px; }
+        .sort-dropdown { right: 0; min-width: 280px; }
+        .genres-dropdown.active, .sort-dropdown.active { display: flex; }
+        .genre-option, .sort-option {
+            padding: 10px 14px; border-radius: 10px; background: transparent; border: none;
+            color: var(--muted); cursor: pointer; text-align: left; font-size: 14px; width: 100%;
+        }
+        .genre-option:hover, .sort-option:hover { background: rgba(34,197,94,0.08); color: var(--text); }
+        .genre-option.active, .sort-option.active { background: var(--accent); color: #060B14; font-weight: 600; }
+
+        .games-grid {
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 24px; padding: 8px 40px 40px;
+        }
+        .game-card {
+            background: linear-gradient(180deg, rgba(13,21,37,0.9) 0%, rgba(10,15,26,0.8) 100%);
+            border: 1px solid rgba(34,197,94,0.1); border-radius: 18px; overflow: hidden;
+            cursor: pointer; transition: all 0.4s; display: flex; flex-direction: column;
+        }
+        .game-card:hover { transform: translateY(-6px); border-color: rgba(34,197,94,0.4); }
+        .card-img-wrap { position: relative; overflow: hidden; aspect-ratio: 16/9; flex-shrink: 0; }
+        .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+        .card-info { padding: 16px; flex: 1; }
+        .card-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+        .card-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+        .card-tag {
+            padding: 5px 12px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.15);
+            border-radius: 20px; font-size: 11px; color: var(--accent);
+        }
+        .card-year {
+            padding: 5px 12px; background: rgba(255,255,255,0.03); border-radius: 20px;
+            font-size: 11px; color: var(--muted);
+        }
+
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(2,5,10,0.8);
+            backdrop-filter: blur(6px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: linear-gradient(180deg, rgba(13,21,37,0.98) 0%, rgba(6,11,20,0.99) 100%);
+            border: 1px solid rgba(34,197,94,0.15); border-radius: 24px;
+            max-width: 650px; width: 100%; max-height: 90vh; overflow-y: auto;
+        }
+        .modal-header img { width: 100%; max-height: 350px; object-fit: cover; border-radius: 24px 24px 0 0; }
+        .modal-close {
+            position: absolute; top: 16px; right: 16px; width: 38px; height: 38px;
+            border-radius: 50%; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .modal-body { padding: 28px; }
+        .modal-body h2 { font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 14px; }
+        .modal-body .description { color: var(--muted); line-height: 1.7; margin-bottom: 20px; }
+        .tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+        .tag {
+            padding: 7px 16px; background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 20px; font-size: 13px; color: var(--accent-hover);
+        }
+        .play-btn {
+            width: 100%; padding: 16px; border: none; border-radius: 14px;
+            background: linear-gradient(135deg, #1a9e4b, #22C55E); color: #060B14;
+            font-size: 17px; font-weight: 700; cursor: pointer;
+        }
+        .credentials {
+            display: none; background: rgba(6,11,20,0.8); border: 1px solid rgba(34,197,94,0.12);
+            border-radius: 16px; padding: 20px; margin-top: 16px;
+        }
+        .credentials.active { display: block; }
+        .cred-field { margin-bottom: 14px; }
+        .cred-field label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+        .value {
+            flex: 1; background: rgba(10,15,26,0.6); border: 1px solid rgba(34,197,94,0.1);
+            padding: 12px 16px; border-radius: 10px; font-family: monospace; font-size: 14px; color: var(--accent);
+        }
+        .copy-row { display: flex; gap: 10px; }
+        .copy-btn {
+            padding: 12px 18px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25);
+            border-radius: 10px; color: var(--accent); cursor: pointer; font-size: 13px;
+        }
+        .report-btn {
+            width: 100%; padding: 12px; border: 1px solid rgba(239,68,68,0.25); border-radius: 10px;
+            background: rgba(239,68,68,0.04); color: #EF4444; cursor: pointer; margin-top: 10px;
+        }
+        .instruction {
+            margin-top: 20px; padding: 20px; background: rgba(34,197,94,0.03);
+            border: 1px solid rgba(34,197,94,0.12); border-radius: 14px; border-left: 3px solid var(--accent);
+        }
+        .instruction h4 { color: var(--accent); margin-bottom: 14px; }
+        .instruction ol { padding-left: 20px; color: var(--muted); line-height: 2; }
+
+        @media (max-width: 1400px) { .games-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 900px) { .games-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 600px) {
+            header { padding: 12px 16px; flex-wrap: wrap; }
+            .search-container { width: 100%; }
+            .games-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; padding: 8px 16px 30px; }
+            .modal-body { padding: 20px; }
+            .modal-body h2 { font-size: 21px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="banner">
+        <img src="images/banner.jpg" alt="VaultPlay">
+        <div class="banner-scroll" onclick="document.getElementById('gamesSection').scrollIntoView({behavior:'smooth'})">▼</div>
+    </div>
+
+    <header>
+        <div class="logo-block" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+            <img src="images/logo.png" alt="VaultPlay" class="logo-icon">
+            <img src="images/logo-text.png" alt="VaultPlay" class="logo-text-img">
+        </div>
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Поиск игр..." oninput="applyFilters()">
+        </div>
+    </header>
+
+    <div class="toolbar" id="gamesSection">
+        <div class="genres-wrapper" style="position:relative;">
+            <button class="genres-toggle" id="genresToggle" onclick="toggleDropdown('genres')">🎮 Жанры <span>▾</span></button>
+            <div class="genres-dropdown" id="genresDropdown"></div>
+        </div>
+        <div class="sort-wrapper" style="position:relative;">
+            <button class="sort-toggle" id="sortToggle" onclick="toggleDropdown('sort')"><span>⇅</span> Сортировка</button>
+            <div class="sort-dropdown" id="sortDropdown"></div>
+        </div>
+    </div>
+
+    <div class="games-grid" id="gamesGrid"></div>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <img id="modalImage" src="" alt="">
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <h2 id="modalTitle"></h2>
+                <p class="description" id="modalDescription"></p>
+                <div class="tags" id="modalTags"></div>
+                <button class="play-btn" id="playBtn" onclick="toggleCredentials()">🎮 Играть</button>
+                <div class="credentials" id="credentials">
+                    <div class="cred-field"><label>Логин</label><div class="copy-row"><span class="value" id="credLogin"></span><button class="copy-btn" onclick="copyText('credLogin',this)">Копировать</button></div></div>
+                    <div class="cred-field"><label>Пароль</label><div class="copy-row"><span class="value" id="credPassword"></span><button class="copy-btn" onclick="copyText('credPassword',this)">Копировать</button></div></div>
+                    <button class="report-btn" onclick="reportGame()">🚫 Игра не работает</button>
+                    <div class="instruction">
+    <h4>📋 Инструкция</h4>
+    <ol>
+        <li>Войдите в Steam с этими данными (если будет вылезать ошибка, то заходите до тех пор пока не зайдете, или попробуйте через какое то время. Если же будет ошибка именно что логин или пароль неверны, нажимайте кнопку что игра не работает)</li>
+        <li>Начните скачивать игру и перейдите в Вид → Big Picture (Таким образом если вас выбросит из аккаунта, игра продолжит загрузку. Смотрите чтобы при скачивании у вас стояло "Это устройство")</li>
+        <li>После установки игры переходите в Steam → Перейти в автономный режим (Теперь вас не будет выбрасывать из аккаунта)</li>
+        <li>Всё! Играйте без ограничений. Не выходите из автономного режима</li>
+    </ol>
+</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gamesData = [];
+        try {
+            const stored = localStorage.getItem('gamesData');
+            if (stored) gamesData = JSON.parse(stored);
+        } catch(e) {}
+        if (gamesData.length === 0 && typeof window.gamesData !== 'undefined') {
+            gamesData = window.gamesData;
+            localStorage.setItem('gamesData', JSON.stringify(gamesData));
+        }
+
+        let activeGenre = 'all';
+        let currentSort = { type: 'year', direction: 'desc' };
+        let currentGame = null;
+        let openDropdown = null;
+
+        const categoryNames = {
+            'all':'Все жанры','action':'Экшен','adventure':'Приключения','rpg':'RPG','shooter':'Шутер','horror':'Хоррор','survival':'Выживание','simulator':'Симулятор','strategy':'Стратегия','racing':'Гонки','openworld':'Открытый мир','coop':'Кооператив','stealth':'Стелс','soulslike':'Souls-like','roguelike':'Рогалик','sandbox':'Песочница','platformer':'Платформер','classic':'Классика','relaxing':'Расслабляющая','mystic':'Мистика','historical':'Историческая','multiplayer':'Мультиплеер'
+        };
+        function getCategoryName(c) { return categoryNames[c] || c; }
+        function getAllGenres() { const s = new Set(); gamesData.forEach(g => g.category.forEach(c => s.add(c))); return ['all', ...Array.from(s).sort()]; }
+        function toggleDropdown(t) {
+            const gd = document.getElementById('genresDropdown'), sd = document.getElementById('sortDropdown'), gt = document.getElementById('genresToggle');
+            if (t === 'genres') { const o = gd.classList.contains('active'); closeAllDropdowns(); if (!o) { gd.classList.add('active'); gt.classList.add('open'); openDropdown = 'genres'; } }
+            else { const o = sd.classList.contains('active'); closeAllDropdowns(); if (!o) { sd.classList.add('active'); openDropdown = 'sort'; } }
+        }
+        function closeAllDropdowns() { document.getElementById('genresDropdown').classList.remove('active'); document.getElementById('genresToggle').classList.remove('open'); document.getElementById('sortDropdown').classList.remove('active'); openDropdown = null; }
+        document.addEventListener('click', e => { if (openDropdown && !e.target.closest('.genres-wrapper') && !e.target.closest('.sort-wrapper')) closeAllDropdowns(); });
+        function renderGenresDropdown() { document.getElementById('genresDropdown').innerHTML = getAllGenres().map(g => `<button class="genre-option ${activeGenre===g?'active':''}" onclick="setGenre('${g}')">${getCategoryName(g)}</button>`).join(''); }
+        const sortOptions = [
+            { type:'popularity', direction:'desc', label:'🔥 По популярности (сначала популярные)' },
+            { type:'popularity', direction:'asc', label:'🔥 По популярности (сначала редкие)' },
+            { type:'year', direction:'desc', label:'📅 По году (сначала новые)' },
+            { type:'year', direction:'asc', label:'📅 По году (сначала старые)' },
+            { type:'default', direction:'desc', label:'🔄 По умолчанию' }
+        ];
+        function renderSortDropdown() {
+            const ak = currentSort.type==='default'?'default':`${currentSort.type}-${currentSort.direction}`;
+            document.getElementById('sortDropdown').innerHTML = sortOptions.map(o => { const k = o.type==='default'?'default':`${o.type}-${o.direction}`; return `<button class="sort-option ${k===ak?'active':''}" onclick="setSort('${o.type}','${o.direction}')">${o.label}</button>`; }).join('');
+        }
+        function setGenre(g) { activeGenre=g; closeAllDropdowns(); renderGenresDropdown(); applyFilters(); }
+        function setSort(t,d) { currentSort={type:t,direction:d}; closeAllDropdowns(); renderSortDropdown(); applyFilters(); }
+        function applyFilters() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            let f = [...gamesData];
+            if (activeGenre !== 'all') f = f.filter(g => g.category.includes(activeGenre));
+            if (q) f = f.filter(g => g.title.toLowerCase().includes(q) || g.description.toLowerCase().includes(q) || g.category.some(c => getCategoryName(c).toLowerCase().includes(q)));
+            if (currentSort.type === 'default') f.sort((a,b) => b.popularity - a.popularity);
+            else f.sort((a,b) => { const va=currentSort.type==='popularity'?a.popularity:a.year, vb=currentSort.type==='popularity'?b.popularity:b.year; return currentSort.direction==='desc'?vb-va:va-vb; });
+            document.getElementById('gamesGrid').innerHTML = f.length===0 ? '<div class="no-results">😕 Ничего не найдено</div>' : f.map(g => `<div class="game-card" onclick="openGameModal(${g.id})"><div class="card-img-wrap"><img src="images/${g.image}" alt="${g.title}"><div class="card-gradient"></div></div><div class="card-info"><div class="card-title">${g.title}</div><div class="card-meta">${g.category.slice(0,2).map(c=>`<span class="card-tag">${getCategoryName(c)}</span>`).join('')}<span class="card-year">${g.year}</span></div></div></div>`).join('');
+        }
+        function openGameModal(id) {
+            currentGame = gamesData.find(g => g.id===id); if (!currentGame) return;
+            document.getElementById('modalImage').src = `images/${currentGame.image}`;
+            document.getElementById('modalTitle').textContent = currentGame.title;
+            document.getElementById('modalDescription').textContent = currentGame.description;
+            document.getElementById('modalTags').innerHTML = currentGame.category.map(c=>`<span class="tag">${getCategoryName(c)}</span>`).join('')+`<span class="tag year-tag">${currentGame.year}</span>`;
+            document.getElementById('credLogin').textContent = currentGame.login;
+            document.getElementById('credPassword').textContent = currentGame.password;
+            document.getElementById('credentials').classList.remove('active');
+            document.getElementById('playBtn').textContent = '🎮 Играть';
+            document.getElementById('modalOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); document.body.style.overflow=''; }
+        function closeModalOutside(e) { if (e.target===document.getElementById('modalOverlay')) closeModal(); }
+        document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
+        function toggleCredentials() { const c=document.getElementById('credentials'); c.classList.toggle('active'); document.getElementById('playBtn').textContent=c.classList.contains('active')?'🔒 Скрыть':'🎮 Играть'; }
+        function copyText(elId, btn) { navigator.clipboard.writeText(document.getElementById(elId).textContent).then(()=>{ btn.textContent='✓ Скопировано'; btn.classList.add('copied'); setTimeout(()=>{ btn.textContent='Копировать'; btn.classList.remove('copied'); },2000); }); }
+        function reportGame() { if(currentGame){ alert(`Жалоба на "${currentGame.title}" отправлена.`); } }
+        function resetAll() { activeGenre='all'; currentSort={type:'popularity',direction:'desc'}; document.getElementById('searchInput').value=''; renderGenresDropdown(); renderSortDropdown(); applyFilters(); }
+
+        setTimeout(() => document.getElementById('gamesSection')?.scrollIntoView({behavior:'smooth'}), 600);
+        renderGenresDropdown(); renderSortDropdown(); applyFilters();
+    </script>
+</body>
+</html>
